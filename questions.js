@@ -9,7 +9,7 @@ questions =  [
     {"id": 7, "question": "Systemic racism is a real issue in Canada and needs to be resolved", "effects": {"prog": 1}},
     {"id": 8, "question": "The Canadian National Anthem is outdated and needs to be replaced", "effects": {"prog": 0.5}},
     {"id": 9, "question": "Conversion therapy is immoral and dangerous", "effects": {"prog": -1}},
-    {"id": 10, "question": "Universal Healthcare has been a failure in our country" "effects": {"right": 1}},
+    {"id": 10, "question": "Universal Healthcare has been a failure in our country", "effects": {"right": 1}},
     {"id": 11, "question": "Land should not be a commodity to be bought and sold.", "effects": {"right": -1}},
     {"id": 12, "question": "Free trade only hurts our country and we deserve more control over our trading operations", "effects": {"right": -1}},
     {"id": 13, "question": "There’s no such thing as private property", "effects": {"right": -1}},
