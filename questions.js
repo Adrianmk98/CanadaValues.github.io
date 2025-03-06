@@ -29,4 +29,5 @@ questions =  [
     {"id": 27, "question": "In times of severe crisis and unrest, the government has the responsibility to restrict liberty in the name of security", "effects": {"auth": 1}},
     {"id": 28, "question": "The government needs to suppress false misinformation to protect the nation's interest", "effects": {"auth": 1}},
     {"id": 29, "question": "Making vaccines compulsory is not just moral but a no brainer", "effects": {"auth": 1}},
+    {"id": 30, "question": "Health Canada granted the province of B.C. a three-year exemption under the Controlled Drugs and Substances Act to decriminalize people who use drugs. Do you agree with this decision", "effects": {"prog": 1,"auth":-1}},
 ];
