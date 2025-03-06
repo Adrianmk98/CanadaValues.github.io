@@ -24,9 +24,10 @@
 <p class="question" id="question-text"></p>
 <button class="button" onclick="next_question(1.0)" style="background-color: #1b5e20;">Strongly Agree</button> <br>
 <button class="button" onclick="next_question(0.5)" style="background-color: #4caf50;">Agree</button> <br>
-<button class="button" onclick="next_question(0)" style="background-color: #bbbbbb;">Neutral / Unsure</button> <br>
+<button class="button" onclick="next_question(0.25)" style="background-color: #bbbbbb;">Neutral</button> <br>
 <button class="button" onclick="next_question(-0.5)" style="background-color: #f44336;">Disagree</button> <br>
 <button class="button" onclick="next_question(-1.0)" style="background-color: #b71c1c;">Strongly Disagree</button> <br>
+    <button class="button" onclick="next_question(0)" style="background-color: darkgray;">Unsure</button> <br>
 <button class="small_button" onclick="prev_question()" id="back_button">Back</button>
 <button class="small_button_off" id="back_button_off">Back</button><br>
 
@@ -35,42 +36,41 @@
     var answers = new Object();     // Store user's answers
     var qn = 0; // Current question order
 
-
     // Populate questionsObject
 
     var questionsObject = new Object();     // Question objects with ID keys
-    questions.forEach(populateQO);
 
-    function populateQO(value) {
-      questionsObject[value['id']] = value
-    }
-
-
-    // Populate & shuffle questionsOrder
-
-    var questionsOrder = Object.keys(questionsObject); //Array of shuffled question IDs
-
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get("shuffle") == "true") {
-        shuffleArray(questionsOrder);
-    }
-
+    // Function to shuffle an array (Fisher-Yates algorithm)
     function shuffleArray(array) {
-      for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-      }
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];  // Swap elements
+        }
+        return array;
     }
+
+    // Function to get 30 random questions
+    function getRandomQuestions(questions, numQuestions = 30) {
+        const shuffledQuestions = shuffleArray([...questions]);  // Shuffle questions array
+        return shuffledQuestions.slice(0, numQuestions);  // Return only the first 'numQuestions' items
+    }
+
+    // Get the 30 random questions from your original set
+    var selectedQuestions = getRandomQuestions(questions);
+    var questionsOrder = selectedQuestions.map(question => question.id);  // Use only the IDs of selected questions
+
+    // Populate questionsObject with only selected questions
+    selectedQuestions.forEach(question => {
+        questionsObject[question.id] = question;
+    });
 
     // Question initialization
-
     init_question();
 
+    // Initialize question display function
     function init_question() {
         $("#question-text").html(questionsObject[questionsOrder[qn]].question);
         $("#question-number").html("Question "+(qn + 1)+" of "+(questionsOrder.length));
-
-
 
         if (jQuery.isEmptyObject(answers)) {
             $('#back_button').hide()
@@ -81,9 +81,7 @@
         }
     }
 
-
-    // Next question
-
+    // Next question function
     function next_question(answer) {
         if (qn === questionsOrder.length) {
             return;
@@ -99,9 +97,7 @@
         }
     }
 
-
-    // Previous question
-
+    // Previous question function
     function prev_question() {
         if (jQuery.isEmptyObject(answers)) {
             $('#back_button').hide()
@@ -115,76 +111,60 @@
         init_question();
     }
 
-
-    // RESULTS
-
+    // Results function
     function results() {
-
         window.sessionStorage.answers = JSON.stringify(answers);
-
 
         // Calculate final results
         pct = percentageCalculation();
         window.sessionStorage.percentages = JSON.stringify(pct);
 
-        // prepare arguments
+        // Prepare arguments for the results page
         var args = '?';
         for (const i in Object.keys(pct)) {
-            effectName = Object.keys(pct)[i]
-            args += `${effectName}=${pct[effectName]}`
+            effectName = Object.keys(pct)[i];
+            args += `${effectName}=${pct[effectName]}`;
 
-            var cycle = parseInt(i)
+            var cycle = parseInt(i);
             if (cycle+1 !== Object.keys(pct).length) {
-                args += '&'
+                args += '&';
             }
         }
-        //return;
-        location.href = `results.html${args}`;
 
+        location.href = `results.html${args}`;
     }
 
-
-    // Calculate percentage
-
+    // Percentage calculation function
     function percentageCalculation() {
-        // calc max
-        var max = new Object(); // Max possible scores
-        var score = new Object(); // User scores
-        var pct = new Object(); // Percentages/Score
+        var max = { right: 0, auth: 0, prog: 0 };  // Max possible scores for each axis
+        var score = { right: 0, auth: 0, prog: 0 };  // User scores for each axis
+        var pct = { right: 0, auth: 0, prog: 0 };   // Percentages/Score for each axis
 
-        // prepare
+        // Get max & scores for each question
         for (const id in answers) {
-            for (const effectName in questionsObject[id].effects) {
-                max[effectName] = 0
-                score[effectName] = 0
-            }
-        }
-
-        // get max & scores
-        for (const id in answers) {
-            // dismiss "don't know"
             if (answers[id] !== null) {
                 for (const effectName in questionsObject[id].effects) {
-                    max[effectName] += Math.abs(questionsObject[id].effects[effectName]);
-                    score[effectName] += answers[id]*questionsObject[id].effects[effectName];
+                    if (questionsObject[id].effects.hasOwnProperty(effectName)) {
+                        max[effectName] += Math.abs(questionsObject[id].effects[effectName]);  // Add to max if effect exists
+                        score[effectName] += answers[id] * questionsObject[id].effects[effectName];  // Calculate user score
+                    }
                 }
             }
         }
 
-        // calc score
-
-        for (const i in Object.keys(max)) {
-            effectName = Object.keys(max)[i]
-
-            if (max[effectName] > 0) {
-                pct[effectName] = (Math.round((score[effectName]*10/max[effectName]) * 100) / 100).toFixed(2);
+        // Calculate the percentage for each axis
+        for (const axis in max) {
+            if (max[axis] > 0) {
+                pct[axis] = (Math.round((score[axis] * 10 / max[axis]) * 100) / 100).toFixed(2);  // Calculate percentage if max > 0
             } else {
-                pct[effectName] = 0
+                pct[axis] = 0;  // If no effect was applied, the percentage is 0
             }
         }
 
         return pct;
     }
+
+
 </script>
 
 </body>
